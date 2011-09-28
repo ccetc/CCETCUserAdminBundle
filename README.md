@@ -14,7 +14,7 @@ To install as a Symfony vendor, add the following lines to the file ``deps``:
 
 If you are using git, you can instead add them as submodules:
 
-        git submodule add git://github.com/CCETC/UserAdminBundle.git vendor/bundles/CCETC/UserAdminBundle
+        git submodule add git@github.com:CCETC/UserAdminBundle.git vendor/bundles/CCETC/UserAdminBundle
 
 
 Unpack the Admin class:
@@ -36,6 +36,10 @@ Add service to app/config.yml:
                 tags:
                         - { name: sonata.admin, manager_type: orm, group: User Data, label: Users }
                 arguments: [null, Path\To\Your\User\Entity, CCETCUserAdminBundle:UserAdmin]
+
+Install assets:
+        
+        bin/vendors install
 
 ## Customization
 You can customize UserAdmin.php to your needs.
