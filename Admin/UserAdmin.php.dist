@@ -1,0 +1,120 @@
+<?php
+namespace CCETC\UserAdminBundle\Admin;
+
+use Sonata\AdminBundle\Admin\Admin;
+use Sonata\AdminBundle\Form\FormMapper;
+use Sonata\AdminBundle\Datagrid\DatagridMapper;
+use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Show\ShowMapper;
+use Sonata\AdminBundle\Route\RouteCollection;
+use FOS\UserBundle\Model\UserManagerInterface;
+
+use GYGB\BackBundle\Entity\User as User;
+
+class UserAdmin extends Admin
+{
+
+    protected $entityIconPath = 'bundles/ccetcuseradmin/images/lock.png';
+    
+    protected $entityLabelPlural = 'Users';
+
+    public function configureRoutes(RouteCollection $collection)
+    {
+        $collection->add('approve', 'approve/{id}');
+        $collection->add('unapprove', 'unapprove/{id}');
+        $collection->add('promote', 'promote/{id}');
+        $collection->add('demote', 'demote/{id}');
+    }
+
+    // Form ======================================================================
+    // ===========================================================================
+    protected function configureFormFields(FormMapper $formMapper)
+    {
+        $formMapper->add('firstName', null, array('label' => 'First Name', 'required' => false));
+        $formMapper->add('lastName', null, array('label' => 'Last Name', 'required' => false));
+        $formMapper->add('email', null, array('label' => 'E-mail', 'required' => false));
+        $formMapper->add('plainPassword', 'text', array('label' => 'Password', 'required' => false));
+        $formMapper->add('enabled', null, array('label' => 'Approved', 'required' => false));
+    }
+
+    public function prePersist($user)
+    {
+        $this->getUserManager()->updatePassword($user);
+        $this->getUserManager()->updateCanonicalFields($user);
+    }
+
+    public function preUpdate($user)
+    {
+        $this->getUserManager()->updatePassword($user);
+        $this->getUserManager()->updateCanonicalFields($user);
+    }
+
+    public function getUserManager()
+    {
+        return $this->configurationPool->getContainer()->get('fos_user.user_manager');
+    }
+
+    // List ======================================================================
+    // ===========================================================================
+    protected function configureListFields(ListMapper $listMapper)
+    {
+        $listMapper
+                ->add('lastName', 'string', array('name' => 'Name', 'template' => 'CCETCUserAdminBundle:User:_name.html.twig'))
+                ->add('email', 'string', array('name' => 'E-mail'))
+                ->add('enabled', 'boolean', array('name' => 'Approved'))
+                ->add('isAdmin', 'string', array('name' => 'Is Admin?', 'template' => 'CCETCUserAdminBundle:User:_isAdmin.html.twig'))
+
+                ->add('_action', 'actions', array(
+                    'actions' => array(
+                        'approve' => array(),
+                        'unapprove' => array(),
+                        'promote' => array('template' => 'CCETCUserAdminBundle:User:_promoteAction.html.twig'),
+                        'demote' => array('template' => 'CCETCUserAdminBundle:User:_demoteAction.html.twig'),
+                        'delete' => array(),
+                    )
+                ))
+        ;
+    }
+    
+    public function getBatchActions()
+    {  
+        return array(
+            'approve' => array('label' => 'Approve Selected'),
+            'unapprove' => array('label' => 'Unapprove Selected'),
+            'promote' => array('label' => 'Promote Selected to Admin'),
+            'demote' => array('label' => 'Demote Selected from Admin'),
+        );
+    }
+
+    public function configureDatagridFilters(DatagridMapper $datagrid)
+    {
+        $datagrid
+            ->add('enabled', null, array('label' => 'Approved'))
+            ->add('isAdmin', 'doctrine_orm_callback', array(
+                'callback' => function($queryBuilder, $alias, $field, $value) {
+                    if(!$value)
+                    {
+                        return;
+                    }
+                    
+                    if($value['value'] == 'true')
+                    {
+                        $queryBuilder->andWhere($alias . ".roles LIKE '%ROLE_ADMIN%'");
+                    }
+                    else if($value['value'] == 'false')
+                    {
+                        $queryBuilder->andWhere($alias . ".roles NOT LIKE '%ROLE_ADMIN%'");
+                    }
+                },
+                'field_type' => 'choice',
+                'field_options'=> array(
+                    'choices' => array('all' => 'all', 'true' => 'yes', 'false' => 'no'),
+                ),
+                'label' => 'Is Admin?'
+            ))
+            ->add('firstName', null, array('label' => 'First Name'))
+            ->add('lastName', null, array('label' => 'Last Name'))
+        ;
+    } 
+
+}
