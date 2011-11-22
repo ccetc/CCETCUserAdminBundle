@@ -57,6 +57,8 @@ class UserAdmin extends Admin
 
     // List ======================================================================
     // ===========================================================================
+    public $listPreHook = 'CCETCUserAdminBundle:Hook:_list.html.twig';
+    
     protected function configureListFields(ListMapper $listMapper)
     {
         $listMapper
