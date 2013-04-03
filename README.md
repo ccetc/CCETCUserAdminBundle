@@ -1,6 +1,8 @@
 UserAdminBundle
 =========
 
+**NOTE: this bundle is not actively tested or maintained**
+
 Provides an a SonataAdmin class for managing users.
 Used on all front and back ends of CCETC web applications.
 
